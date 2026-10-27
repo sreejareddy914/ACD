@@ -3,10 +3,13 @@ import { ExtractedContent, DarkPatternFinding } from '../types';
 export function checkSocialProof(content: ExtractedContent): DarkPatternFinding[] {
   const findings: DarkPatternFinding[] = [];
 
-  const socialProofRegex = /(?:\d+\s+people\s+(?:bought|purchased|viewed|booked)\s+this\s+in\s+the\s+last|someone\s+from\s+[A-Za-z\s]+\s+just\s+(?:purchased|ordered)|trending\s+now:\s+\d+\s+views|in\s+high\s+demand!\s+\d+\s+others\s+looking)/i;
+  const socialProofRegex = /(?:\d+[kK\+]?\+?\s+(?:people|shoppers|customers|travelers|users)?\s*(?:bought|purchased|viewed|booked|ordered)\s+(?:this\s+)?(?:in\s+the\s+last|in\s+past|today|recently)|someone\s+from\s+[A-Za-z\s]+\s+just\s+(?:purchased|ordered)|trending\s+now(?::\s*\d+\s*views)?|in\s+high\s+demand!\s+\d+\s+others\s+looking|popular\s+(?:choice|pick)|#?1\s+best\s*seller|loved\s+by\s+\d+[kK\+]?)/i;
 
+  let count = 0;
   for (const item of content.visibleTexts) {
+    if (count >= 2) break;
     if (socialProofRegex.test(item.text) && item.text.length < 120) {
+      count++;
       findings.push({
         id: `social-proof-${item.id}`,
         category: 'social_proof',
@@ -20,7 +23,6 @@ export function checkSocialProof(content: ExtractedContent): DarkPatternFinding[
         recommendedAction: 'Focus on whether the product meets your specific needs rather than peer-pressure tickers.',
         elementId: item.id
       });
-      break;
     }
   }
 

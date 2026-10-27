@@ -54,20 +54,93 @@ export function parseAndSanitizeAiResponse(
 
     const parsed = JSON.parse(cleanText);
 
+    // Helper to infer category if missing or generic
+    const inferCategory = (str: string): string => {
+      const s = str.toLowerCase();
+      if (/hurry|urgent|expire|timer|countdown|ending|today only|last chance/i.test(s)) return 'urgency';
+      if (/stock|left|few|only \d+|demand|selling|gone|almost sold/i.test(s)) return 'scarcity';
+      if (/discount|save|off|was|mrp|strike|deal|markdown|phantom/i.test(s)) return 'discounts';
+      if (/fee|charge|surcharge|hidden|drip|handling|convenience/i.test(s)) return 'hidden_charges';
+      if (/download|stream|watch|play|ad|torrent|magnet|sponsor|fake button/i.test(s)) return 'disguised_ads';
+      if (/people|bought|viewing|customer|trending|popular/i.test(s)) return 'social_proof';
+      if (/sign|account|login|register|wall|guest/i.test(s)) return 'forced_signup';
+      if (/cancel|unsubscribe|call|retention/i.test(s)) return 'cancellation';
+      return 'other_patterns';
+    };
+
+    const inferCategoryName = (cat: string): string => {
+      switch (cat) {
+        case 'urgency': return 'Fake Urgency';
+        case 'scarcity': return 'Fake Scarcity';
+        case 'discounts': return 'Misleading Discounts';
+        case 'hidden_charges': return 'Hidden Charges & Drip Pricing';
+        case 'disguised_ads': return 'Disguised Advertisements';
+        case 'social_proof': return 'Social Proof Manipulation';
+        case 'forced_signup': return 'Forced Sign-Up';
+        case 'cancellation': return 'Difficult Cancellation (Roach Motel)';
+        default: return 'Deceptive Design Pattern';
+      }
+    };
+
+    // Extract raw findings list from various LLM structures
+    let rawList: any[] = [];
+    if (Array.isArray(parsed.findings)) {
+      rawList = parsed.findings;
+    } else if (parsed.findings && typeof parsed.findings === 'object') {
+      if (Array.isArray(parsed.findings.indicators)) {
+        rawList = parsed.findings.indicators;
+      } else if (Array.isArray(parsed.findings.items)) {
+        rawList = parsed.findings.items;
+      } else {
+        rawList = Object.values(parsed.findings).filter(v => typeof v === 'string' || typeof v === 'object');
+      }
+    } else if (Array.isArray(parsed.patterns)) {
+      rawList = parsed.patterns;
+    } else if (Array.isArray(parsed.deceptivePatterns)) {
+      rawList = parsed.deceptivePatterns;
+    }
+
     // Validate and sanitize AI findings according to ClearChoice AI standards
     const validFindings: any[] = [];
-    if (Array.isArray(parsed.findings)) {
-      for (const f of parsed.findings) {
-        if (!f || typeof f !== 'object') continue;
-        if (!f.title || !f.evidence) continue;
+    for (const f of rawList) {
+      if (!f) continue;
+      
+      if (typeof f === 'string') {
+        const cat = inferCategory(f);
+        validFindings.push({
+          id: `ai-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          category: cat,
+          categoryName: inferCategoryName(cat),
+          title: f.length > 80 ? f.slice(0, 80) + '...' : f,
+          severity: 'medium',
+          confidence: 75,
+          classification: 'potential_dark_pattern',
+          evidenceStrength: 'limited',
+          verificationStatus: 'observed',
+          evidence: f.slice(0, 300),
+          whyFlagged: f.slice(0, 300),
+          detectionMethod: 'ai',
+          recommendedAction: 'Carefully inspect page terms and compare options independently before proceeding.',
+          supportingEvidence: [f],
+          contradictoryEvidence: [],
+          missingEvidence: [],
+          limitations: [`Evaluated by ${providerName} AI based on extracted webpage content.`]
+        });
+        continue;
+      }
+
+      if (typeof f === 'object') {
+        const title = f.title || f.name || f.pattern || f.heading || (typeof f.evidence === 'string' ? f.evidence.slice(0, 60) : 'Deceptive Interface Pattern');
+        const evidence = f.evidence || f.text || f.observedValue || f.quote || f.description || title;
+        const cat = f.category && f.category !== 'other_patterns' ? f.category : inferCategory(`${title} ${evidence}`);
 
         validFindings.push({
           id: f.id || `ai-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-          category: f.category || 'other_patterns',
-          categoryName: f.categoryName || 'Deceptive Pattern',
-          title: String(f.title).slice(0, 120),
+          category: cat,
+          categoryName: f.categoryName || inferCategoryName(cat),
+          title: String(title).slice(0, 120),
           severity: ['informational', 'low', 'medium', 'high', 'critical'].includes(f.severity) ? f.severity : 'medium',
-          confidence: typeof f.confidence === 'number' ? Math.max(0, Math.min(100, f.confidence)) : 70,
+          confidence: typeof f.confidence === 'number' ? Math.max(0, Math.min(100, f.confidence)) : 75,
           classification: ['verified_deceptive', 'strong_evidence', 'potential_dark_pattern', 'insufficient_evidence'].includes(f.classification)
             ? f.classification
             : 'potential_dark_pattern',
@@ -77,12 +150,12 @@ export function parseAndSanitizeAiResponse(
           verificationStatus: ['verified', 'observed', 'unverified', 'unsupported'].includes(f.verificationStatus)
             ? f.verificationStatus
             : 'observed',
-          evidence: String(f.evidence).slice(0, 300),
-          whyFlagged: String(f.whyFlagged || `Manipulative pattern detected by ${providerName} AI model.`).slice(0, 300),
+          evidence: String(evidence).slice(0, 300),
+          whyFlagged: String(f.whyFlagged || f.reason || f.description || `Manipulative pattern detected by ${providerName} AI model.`).slice(0, 300),
           detectionMethod: 'ai',
-          recommendedAction: String(f.recommendedAction || 'Review terms carefully before proceeding.').slice(0, 250),
+          recommendedAction: String(f.recommendedAction || f.action || 'Review terms carefully before proceeding.').slice(0, 250),
           elementId: f.elementId ? String(f.elementId) : undefined,
-          supportingEvidence: Array.isArray(f.supportingEvidence) ? f.supportingEvidence : [f.evidence],
+          supportingEvidence: Array.isArray(f.supportingEvidence) ? f.supportingEvidence : [String(evidence)],
           contradictoryEvidence: Array.isArray(f.contradictoryEvidence) ? f.contradictoryEvidence : [],
           missingEvidence: Array.isArray(f.missingEvidence) ? f.missingEvidence : [],
           limitations: Array.isArray(f.limitations)
@@ -141,9 +214,15 @@ export async function executeAiAnalysis(req: AnalyzeRequest): Promise<AiAnalysis
     for (const geminiModel of geminiModelsToTry) {
       const elapsed = Date.now() - startTime;
       const remainingBudget = MAX_TOTAL_BACKEND_TIMEOUT_MS - elapsed;
-      if (remainingBudget <= 1000) break;
+      // Reserve at least 6.5s for Groq fallback if Groq key is present
+      const minReserveForGroq = groqApiKey ? 6500 : 1000;
+      if (remainingBudget <= minReserveForGroq) {
+        console.warn(`[ClearChoice AI Provider] Time budget prioritizes Groq fallback (${remainingBudget}ms remaining).`);
+        break;
+      }
 
-      const geminiTimeoutMs = Math.min(8000, remainingBudget - 500);
+      // Cap Gemini timeout at 4000ms so fallback to Groq happens rapidly on quota/load spikes
+      const geminiTimeoutMs = Math.min(4000, remainingBudget - minReserveForGroq);
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), geminiTimeoutMs);
 
@@ -189,6 +268,13 @@ export async function executeAiAnalysis(req: AnalyzeRequest): Promise<AiAnalysis
           console.warn(
             `[ClearChoice AI Provider] Gemini (${geminiModel}) returned HTTP ${status}: ${sanitizeError(errDetail)}.`
           );
+
+          // If Gemini returns 429 (quota exceeded), 503 (high demand), 403, 401, or 500:
+          // Immediately break to Groq fallback without burning time on other Gemini models
+          if (groqApiKey && (status === 429 || status === 503 || status === 403 || status === 401 || status === 500 || status === 404)) {
+            console.warn(`[ClearChoice AI Provider] Gemini unavailable (${status}). Immediately transferring to Groq fallback.`);
+            break;
+          }
         }
       } catch (err: any) {
         const isAbort = err.name === 'AbortError';
@@ -196,6 +282,11 @@ export async function executeAiAnalysis(req: AnalyzeRequest): Promise<AiAnalysis
           `[ClearChoice AI Provider] Gemini (${geminiModel}) ${isAbort ? `timed out after ${geminiTimeoutMs}ms` : 'request failed'}:`,
           sanitizeError(err.message || err)
         );
+        // On timeout or connection failure, immediately fall back to Groq
+        if (groqApiKey) {
+          console.warn('[ClearChoice AI Provider] Gemini timed out or failed. Switching to Groq fallback.');
+          break;
+        }
       } finally {
         clearTimeout(timeoutId);
       }
@@ -219,9 +310,10 @@ export async function executeAiAnalysis(req: AnalyzeRequest): Promise<AiAnalysis
   // Model list for Groq: use configured GROQ_MODEL, with fallback to supported high-performance chat models
   const configuredGroqModel = process.env.GROQ_MODEL;
   const supportedGroqModels = [
-    'openai/gpt-oss-120b',
     'qwen/qwen3.8-27b',
+    'openai/gpt-oss-120b',
     'openai/gpt-oss-20b',
+    'allam-2-7b',
     'llama-3.3-70b-versatile'
   ];
   const groqModelsToTry = configuredGroqModel
@@ -246,7 +338,8 @@ export async function executeAiAnalysis(req: AnalyzeRequest): Promise<AiAnalysis
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${groqApiKey}`
+          'Authorization': `Bearer ${groqApiKey}`,
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) ClearChoiceAI/1.0'
         },
         body: JSON.stringify({
           model,

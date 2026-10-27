@@ -18,26 +18,33 @@ CRITICAL SECURITY INSTRUCTIONS:
   const safeUrl = req.pageUrl.slice(0, 200).replace(/[<>{}]/g, '');
 
   const texts = (req.extractedContent.visibleTexts || [])
-    .slice(0, 30)
-    .map(t => `[${t.id}] ${t.text.replace(/[\n\r]/g, ' ').slice(0, 100)}`)
+    .slice(0, 60)
+    .map(t => `[${t.id}] ${t.text.replace(/[\n\r]/g, ' ').slice(0, 140)}`)
     .join('\n');
 
   const buttons = (req.extractedContent.buttons || [])
-    .slice(0, 15)
-    .map(b => `[${b.id}] ${b.text.slice(0, 60)}`)
+    .slice(0, 25)
+    .map(b => `[${b.id}] ${b.text.slice(0, 80)}`)
     .join('\n');
 
   const prices = (req.extractedContent.prices || [])
-    .slice(0, 10)
+    .slice(0, 20)
     .map(p => `[${p.id}] ${p.raw}`)
     .join('\n');
 
   const formControls = (req.extractedContent.formControls || [])
-    .slice(0, 10)
+    .slice(0, 15)
     .map(c => `[${c.id}] ${c.label} (checked: ${c.checked ? 'true' : 'false'})`)
     .join('\n');
 
-  const userPrompt = `Analyze the following webpage content for deceptive interface designs (dark patterns):
+  const userPrompt = `Analyze the following webpage content for all deceptive interface designs (dark patterns), including:
+- Fake urgency (countdown timers, expiring offers)
+- Fake scarcity & synthetic demand ("only X left", "in high demand", "selling fast")
+- Misleading or phantom reference discounts (inflated strikethrough prices, exaggerated % off)
+- Disguised ads & deceptive buttons (fake download, stream, or play buttons)
+- Hidden fees, drip pricing, and mandatory surcharges
+- Social proof manipulation (manufactured viewer tickers or purchase counts)
+- Forced sign-ups, forced app downloads, or obstacle-laden cancellation:
 
 <webpage_content>
 Page Title: ${safeTitle}

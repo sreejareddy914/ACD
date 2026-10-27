@@ -7,12 +7,19 @@ export function checkScarcity(content: ExtractedContent): DarkPatternFinding[] {
   const scarcityRegex = /(?:only\s+(?:\d+|a\s+few|few|one)\s+(?:items?|units?|left|in\s+stock|remaining|tickets?|seats?|rooms?)|only\s+\d+\s+left\s+in\s+stock|only\s+few\s+left|few\s+items\s+left|few\s+units\s+left|low\s+stock|almost\s+(?:sold\s+out|gone)|last\s+one\s+left|selling\s+fast|selling\s+out\s+fast|high\s+demand|in\s+high\s+demand|hurry[,\s!]+only|limited\s+(?:stock|availability|quantity)|trending\s+item|order\s+soon(?:\s*-\s*only\s+\d+\s+left)?)/i;
   const viewerCounterRegex = /(?:(?:\d+[kK\+]?|\d+)\s*(?:people|shoppers|customers|travelers|guests|users)?\s*(?:are\s+)?(?:viewing|looking\s+at|booking|bought\s+(?:this|in\s+(?:the\s+)?past)|purchased)|in\s+\d+\s+people['’]s\s+carts?|\b\d+[kK\+]?\+?\s+bought\s+in\s+past\s+(?:month|week|day)|popular\s+pick\s*-\s*\d+)/i;
 
-  let hasScarcity = false;
-  let hasViewer = false;
+  let scarcityCount = 0;
+  let viewerCount = 0;
+  const MAX_SCARCITY_FINDINGS = 3;
+  const MAX_VIEWER_FINDINGS = 2;
+  const seenScarcityTexts = new Set<string>();
 
   for (const item of content.visibleTexts) {
-    if (!hasScarcity && scarcityRegex.test(item.text) && item.text.length < 100) {
-      hasScarcity = true;
+    const norm = item.text.trim().toLowerCase();
+    if (seenScarcityTexts.has(norm)) continue;
+
+    if (scarcityCount < MAX_SCARCITY_FINDINGS && scarcityRegex.test(item.text) && item.text.length < 120) {
+      scarcityCount++;
+      seenScarcityTexts.add(norm);
       const evRecord: EvidenceRecord = {
         id: `ev-scarcity-${item.id}`,
         pattern: 'scarcity',
@@ -62,8 +69,9 @@ export function checkScarcity(content: ExtractedContent): DarkPatternFinding[] {
       });
     }
 
-    if (!hasViewer && viewerCounterRegex.test(item.text) && item.text.length < 100) {
-      hasViewer = true;
+    if (viewerCount < MAX_VIEWER_FINDINGS && viewerCounterRegex.test(item.text) && item.text.length < 120) {
+      viewerCount++;
+      seenScarcityTexts.add(norm);
       const evRecord: EvidenceRecord = {
         id: `ev-viewer-${item.id}`,
         pattern: 'scarcity',
@@ -113,7 +121,7 @@ export function checkScarcity(content: ExtractedContent): DarkPatternFinding[] {
       });
     }
 
-    if (hasScarcity && hasViewer) break;
+    if (scarcityCount >= MAX_SCARCITY_FINDINGS && viewerCount >= MAX_VIEWER_FINDINGS) break;
   }
 
   return findings;

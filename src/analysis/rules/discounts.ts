@@ -189,9 +189,12 @@ export function checkDiscounts(content: ExtractedContent): DarkPatternFinding[] 
   }
 
   // 3. Vague reference price claims without verifiable breakdown
-  const vagueDiscountRegex = /(?:save\s+up\s+to\s+\d{1,3}%\s+without\s+conditions|inflated\s+reference\s+price|fake\s+msrp)/i;
+  const vagueDiscountRegex = /(?:save\s+(?:up\s+to\s+)?(?:[5-9]\d|100)%\s*(?:off|without\s+conditions)?|(?:up\s+to|flat)\s+(?:[5-9]\d)%\s+off|lowest\s+price\s+(?:guaranteed|in\s+\d+\s+days)|inflated\s+reference\s+price|fake\s+msrp)/i;
+  let anchorDiscountCount = 0;
   for (const item of content.visibleTexts) {
-    if (vagueDiscountRegex.test(item.text)) {
+    if (anchorDiscountCount >= 2) break;
+    if (vagueDiscountRegex.test(item.text) && item.text.length < 120) {
+      anchorDiscountCount++;
       const evRecord: EvidenceRecord = {
         id: `ev-discount-vague-${item.id}`,
         pattern: 'discounts',

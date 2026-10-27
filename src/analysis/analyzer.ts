@@ -95,14 +95,28 @@ export async function analyzeWebpageContent(
     const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     try {
+      // Prioritize high-value e-commerce, deals, buttons, and action texts so header navigation doesn't crowd out page content
+      const priorityPattern = /(?:price|sale|deal|off|save|discount|mrp|strike|free|only|left|stock|hurry|order|buy|cart|checkout|fee|charge|download|stream|watch|play|magnet|torrent|ad|sponsor|rating|review|trending|bestseller|popular|exclusive|limited|expire|urgent|sign|login|register|cancel|terms|agree|verify|claim|win|prize)/i;
+      const priorityTexts: typeof content.visibleTexts = [];
+      const standardTexts: typeof content.visibleTexts = [];
+
+      for (const t of content.visibleTexts) {
+        if (priorityPattern.test(t.text)) {
+          priorityTexts.push(t);
+        } else {
+          standardTexts.push(t);
+        }
+      }
+      const prioritizedTexts = [...priorityTexts, ...standardTexts].slice(0, 80);
+
       const requestPayload = {
         pageTitle: content.title,
         pageUrl: content.url,
         extractedContent: {
-          visibleTexts: content.visibleTexts.slice(0, 40),
-          buttons: content.buttons.slice(0, 20),
-          prices: content.prices.slice(0, 15),
-          formControls: content.formControls.slice(0, 15)
+          visibleTexts: prioritizedTexts,
+          buttons: content.buttons.slice(0, 30),
+          prices: content.prices.slice(0, 25),
+          formControls: content.formControls.slice(0, 20)
         },
         observedSignals: findings.map(f => ({
           id: f.id,
