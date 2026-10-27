@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClearChoice AI - Grounded Dark Patterns Test Laboratory</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --danger: #dc2626;
+      --warning: #d97706;
+      --success: #16a34a;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding-bottom: 80px;
+    }
+    header {
+      background: #0f172a;
+      color: white;
+      padding: 24px 32px;
+      border-bottom: 3px solid var(--primary);
+    }
+    .header-container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    header h1 {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    header p {
+      color: #94a3b8;
+      font-size: 14px;
+      margin-top: 4px;
+    }
+    .notice-bar {
+      background: #eff6ff;
+      border-left: 4px solid var(--primary);
+      padding: 14px 20px;
+      max-width: 1100px;
+      margin: 24px auto 0 auto;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #1e3a8a;
+    }
+    main {
+      max-width: 1100px;
+      margin: 24px auto 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+      gap: 24px;
+      padding: 0 16px;
+    }
+    .test-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      position: relative;
+    }
+    .test-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+    }
+    .badge-urgency { background: #fee2e2; color: #991b1b; }
+    .badge-scarcity { background: #fef3c7; color: #92400e; }
+    .badge-discount { background: #fce7f3; color: #9d174d; }
+    .badge-hidden { background: #ffedd5; color: #9a3412; }
+    .badge-forced { background: #e0e7ff; color: #3730a3; }
+    .badge-cancel { background: #f1f5f9; color: #334155; }
+
+    .test-card h2 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .test-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      border-bottom: 1px dashed var(--border);
+      padding-bottom: 12px;
+    }
+    .component-box {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    /* Timer Styles */
+    .timer-display {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--danger);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      letter-spacing: 1px;
+    }
+    .urgency-text {
+      color: var(--danger);
+      font-weight: 700;
+      font-size: 14px;
+      margin-top: 6px;
+    }
+
+    /* Price & Discount Styles */
+    .price-row {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .sale-price {
+      font-size: 24px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .original-price, del, .strike {
+      font-size: 16px;
+      color: #94a3b8;
+      text-decoration: line-through;
+    }
+    .discount-badge {
+      background: #ec4899;
+      color: white;
+      font-weight: 800;
+      font-size: 13px;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    /* Fee Breakdown */
+    .fee-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .fee-table tr {
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .fee-table td {
+      padding: 8px 4px;
+    }
+    .fee-table td:last-child {
+      text-align: right;
+      font-family: monospace;
+      font-weight: 600;
+    }
+    .fee-table .total-row {
+      font-weight: 800;
+      font-size: 15px;
+      color: #0f172a;
+      border-top: 2px solid #0f172a;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      margin-top: 8px;
+      text-decoration: none;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+    .btn-outline {
+      background: white;
+      border-color: #cbd5e1;
+      color: #334155;
+    }
+    .btn-danger {
+      background: #fee2e2;
+      color: #991b1b;
+      border-color: #fca5a5;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-container">
+      <h1>ClearChoice AI · Dark Pattern Grounding Laboratory</h1>
+      <p>Standard testbed containing authentic DOM structures for all 6 target deceptive design categories.</p>
+    </div>
+  </header>
+
+  <div class="notice-bar">
+    <strong>Testing Instructions:</strong> Open your ClearChoice AI extension popup or click the floating shield, then click <strong>"Scan This Page"</strong>. Review the detected patterns and open <strong>Scan Diagnostics</strong> to trace extracted elements and 6-detector executions.
+  </div>
+
+  <main>
+    <!-- Pattern 1: Fake Urgency -->
+    <section class="test-card" id="test-card-urgency">
+      <span class="test-badge badge-urgency">Pattern 1: Fake Urgency</span>
+      <h2>Flash Sale Ticking Countdown Timer</h2>
+      <p class="test-desc">Tests extraction of active countdown clock, hours/minutes parsing, and high-pressure artificial expiration copy.</p>
+      
+      <div class="component-box" id="urgency-container">
+        <div>Limited Time Deal of the Day:</div>
+        <div class="timer-display" id="flash-sale-timer">Sale ends in 02h 15m 30s</div>
+        <div class="urgency-text">Hurry! Flash sale ends today! Buy now before time runs out!</div>
+        <button class="btn btn-primary" id="btn-urgency-claim">Claim Discount Now</button>
+      </div>
+    </section>
+
+    <!-- Pattern 2: Fake Scarcity -->
+    <section class="test-card" id="test-card-scarcity">
+      <span class="test-badge badge-scarcity">Pattern 2: Fake Scarcity</span>
+      <h2>Stock Scarcity & High-Pressure Viewer Counter</h2>
+      <p class="test-desc">Tests low stock warnings ("Only 2 items left", "Few items left") and synthetic real-time shopper activity counters.</p>
+      
+      <div class="component-box" id="scarcity-container">
+        <h3 style="font-size: 15px; font-weight: 700;">Wireless Noise-Cancelling Headphones Pro</h3>
+        <div style="margin-top: 6px; color: var(--danger); font-weight: 700; font-size: 13px;" id="scarcity-stock-msg">
+          Hurry, only 2 items left in stock - selling fast!
+        </div>
+        <div style="margin-top: 4px; color: var(--warning); font-size: 12px; font-weight: 600;" id="scarcity-viewer-msg">
+          38 people are viewing this product right now!
+        </div>
+        <div style="margin-top: 4px; font-size: 12px; color: #475569;">
+          In high demand: Popular item, few units left!
+        </div>
+        <button class="btn btn-primary" id="btn-scarcity-cart">Add to Cart</button>
+      </div>
+    </section>
+
+    <!-- Pattern 3: Misleading Discounts -->
+    <section class="test-card" id="test-card-discounts">
+      <span class="test-badge badge-discount">Pattern 3: Misleading Discounts</span>
+      <h2>Mathematical Discount Inflation & Price Inversion</h2>
+      <p class="test-desc">Tests verifiable discount arithmetic: MRP ₹5,000 to ₹4,000 is 20% off, but badge advertises 60% OFF (40% exaggeration).</p>
+      
+      <div class="component-box" id="discount-product-card">
+        <h3 style="font-size: 15px; font-weight: 700;">Designer Italian Leather Jacket</h3>
+        
+        <!-- Product A: Mathematical discrepancy (Claimed 60% vs Calculated 20%) -->
+        <div class="price-row" id="product-price-block">
+          <span class="sale-price" id="pdp-current-price">₹4,000</span>
+          <del class="original-price strike" id="pdp-mrp-price">₹5,000</del>
+          <span class="discount-badge" id="pdp-claimed-discount">60% OFF</span>
+        </div>
+        
+        <p style="font-size: 11px; color: #64748b; margin-top: 8px;">
+          Note: Authentic calculation: (5000 - 4000) / 5000 = 20% actual reduction.
+        </p>
+
+        <!-- Product B: Reference price inversion -->
+        <div style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed #cbd5e1;">
+          <div style="font-size: 12px; font-weight: 600;">Sub-item Inverted Pricing:</div>
+          <div class="price-row">
+            <span class="sale-price">₹1,800</span>
+            <del class="original-price">₹1,200</del>
+            <span style="font-size: 11px; color: #dc2626;">(Crossed price is lower than current asking price)</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pattern 4: Hidden Charges / Drip Pricing -->
+    <section class="test-card" id="test-card-charges">
+      <span class="test-badge badge-hidden">Pattern 4: Hidden Charges & Drip Pricing</span>
+      <h2>Mandatory Late-Disclosed Platform & Handling Surcharges</h2>
+      <p class="test-desc">Tests unexpected checkout drip fees (Platform Fee, Packaging Fee, Handling Fee) added on top of base cart total.</p>
+      
+      <div class="component-box" id="checkout-fee-box">
+        <table class="fee-table">
+          <tbody>
+            <tr>
+              <td>Cart Items Subtotal</td>
+              <td>₹1,200.00</td>
+            </tr>
+            <tr>
+              <td style="color: var(--danger); font-weight: 600;" id="fee-platform">Mandatory Platform Fee</td>
+              <td>₹50.00</td>
+            </tr>
+            <tr>
+              <td style="color: var(--danger); font-weight: 600;" id="fee-handling">Handling Fee Applied</td>
+              <td>₹35.00</td>
+            </tr>
+            <tr>
+              <td style="color: var(--danger);" id="fee-packaging">Convenience Fee</td>
+              <td>₹25.00</td>
+            </tr>
+            <tr class="total-row">
+              <td>Final Total Charge</td>
+              <td>₹1,310.00</td>
+            </tr>
+          </tbody>
+        </table>
+        <button class="btn btn-primary" style="width: 100%; margin-top: 12px;" id="btn-pay-checkout">Proceed to Secure Payment</button>
+      </div>
+    </section>
+
+    <!-- Pattern 5: Forced Sign-Up -->
+    <section class="test-card" id="test-card-signup">
+      <span class="test-badge badge-forced">Pattern 5: Forced Sign-Up</span>
+      <h2>Broken Guest Checkout Barrier</h2>
+      <p class="test-desc">Promised guest checkout to lure users into cart, but subsequent step enforces mandatory password & account creation.</p>
+      
+      <div class="component-box" id="signup-container">
+        <div style="background: #e0f2fe; color: #0369a1; padding: 6px 10px; border-radius: 4px; font-weight: 600; font-size: 12px;">
+          ✓ Continue as guest available for fast checkout
+        </div>
+
+        <div style="margin-top: 12px; font-size: 13px;">
+          <label style="display: block; font-weight: 600; margin-bottom: 4px;">Email Address</label>
+          <input type="email" value="shopper@example.com" disabled style="width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff;" />
+        </div>
+
+        <div style="margin-top: 12px; background: #fef2f2; border: 1px solid #fecaca; padding: 10px; border-radius: 6px;">
+          <div style="color: var(--danger); font-weight: 700; font-size: 12px;" id="enforce-password-text">
+            Account creation is mandatory to complete purchase. Password required to complete.
+          </div>
+          <div style="font-size: 11px; color: #7f1d1d; margin-top: 2px;">
+            Guest purchases are temporarily disabled. You must create password to proceed.
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="btn-signup-enforced">Create Account & Pay</button>
+      </div>
+    </section>
+
+    <!-- Pattern 6: Difficult Cancellation (Roach Motel) -->
+    <section class="test-card" id="test-card-cancellation">
+      <span class="test-badge badge-cancel">Pattern 6: Difficult Cancellation</span>
+      <h2>Asymmetric Cancellation Barrier & Confusing Dialog</h2>
+      <p class="test-desc">Online subscription signup is instant, but cancellation mandates an offline phone call, plus double-negative confirmation buttons.</p>
+      
+      <div class="component-box" id="cancellation-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+          <div>
+            <div style="font-weight: 700; font-size: 14px;">VIP Club Membership</div>
+            <div style="font-size: 11px; color: #64748b;">$29.99/month (Billed automatically)</div>
+          </div>
+          <span style="background: #dcfce7; color: #15803d; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">ACTIVE</span>
+        </div>
+
+        <div style="margin-top: 12px; font-size: 12px; background: #fff1f2; border: 1px solid #ffe4e6; padding: 10px; border-radius: 6px; color: #9f1239;">
+          <strong>Cancellation Policy:</strong>
+          <p id="cancellation-offline-barrier" style="margin-top: 4px;">
+            Cancellation only by phone. You must call to cancel by speaking with a representative at 1-800-555-0199 during operating hours. Cancel button disabled.
+          </p>
+        </div>
+
+        <div style="margin-top: 12px; display: flex; gap: 8px;">
+          <button class="btn btn-primary" id="btn-keep-sub" style="flex: 1;">Don't cancel and keep my membership</button>
+          <button class="btn btn-outline" id="btn-cancel-attempt" style="font-size: 11px;">Cancel Plan</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Live Dynamic Timer Script -->
+  <script>
+    (function initDynamicTimer() {
+      var totalSeconds = 2 * 3600 + 15 * 60 + 30; // 02:15:30
+      var timerEl = document.getElementById('flash-sale-timer');
+      if (!timerEl) return;
+
+      setInterval(function () {
+        if (totalSeconds > 0) {
+          totalSeconds--;
+        } else {
+          totalSeconds = 2 * 3600 + 15 * 60 + 30; // reset simulation
+        }
+        var hrs = Math.floor(totalSeconds / 3600);
+        var mins = Math.floor((totalSeconds % 3600) / 60);
+        var secs = totalSeconds % 60;
+        var pad = function (n) { return n < 10 ? '0' + n : n; };
+        timerEl.textContent = 'Sale ends in ' + pad(hrs) + 'h ' + pad(mins) + 'm ' + pad(secs) + 's';
+      }, 1000);
+    })();
+  </script>
+</body>
+</html>
